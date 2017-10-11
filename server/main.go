@@ -1,8 +1,7 @@
 package main
 
-import 	"github.com/mc-lovin_work/mcpubsub"
+import 	"github.com/PAD/mcpubsub"
 
 func main() {
-
 	mcpubsub.Start()
 }

@@ -52,9 +52,9 @@ func Start() error {
 		return errors.New("Not able to accept connections.")
 	}
 
+	restoreData()
 	go broadCaster()
 	go startBackupTimer()
-	go restoreData()
 
 	for {
 		conn, err := listen.Accept()
@@ -96,6 +96,8 @@ func broadCastMessage(message serverMessage) (err error) {
 }
 
 func startBackupTimer() {
+	fmt.Println("Start backup timer")
+
 	ticker := time.NewTicker(5 * time.Second)
 	quit := make(chan struct{})
 	go func() {
@@ -113,26 +115,29 @@ func startBackupTimer() {
 
 func backup() {
 	bytes, _ := json.Marshal(pipeline)
+	fmt.Println("Backup ", string(bytes))
 	ioutil.WriteFile(filePath, bytes, 0644)
 }
 
 func restoreData() {
 	time.Sleep(time.Second * 2)
 
-	var messages []serverMessage
+	var restore map[string]*Queue
 
 	file, _ := ioutil.ReadFile(filePath)
-	json.Unmarshal(file, &messages)
-	for _, msg := range messages {
-		fmt.Println("Restoring " + msg.Message)
-		_, ok := pipeline[msg.Topic]
+	json.Unmarshal(file, &restore)
+	for topic, queue := range restore {
+		fmt.Println("Restoring topic" + topic)
+		_, ok := pipeline[topic]
 		if !ok {
-			pipeline[msg.Topic] = NewQueue()
+			pipeline[topic] = NewQueue()
 		}
-		pipeline[msg.Topic].Push(msg)
+		for _, msg := range queue.Messages {
+			fmt.Println("Restoring message " + msg.Message)
+			pipeline[topic].Push(msg)
+		}
 	}
-
-	backup()
+	ioutil.WriteFile(filePath, []byte(""), 0644)
 }
 
 func handleConnection(conn net.Conn) {
@@ -151,7 +156,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func handleMessage(message serverMessage, rw *bufio.ReadWriter) {
-	fmt.Println("Received message type" + message.Type)
+	fmt.Println("Received message type " + message.Type)
 	switch message.Type {
 	case newPublisher:
 		fmt.Printf("Publisher connected")
@@ -161,16 +166,24 @@ func handleMessage(message serverMessage, rw *bufio.ReadWriter) {
 			pipeline[message.Topic] = NewQueue()
 		}
 		pipeline[message.Topic].Push(message)
-		subscriptionMap[message.Topic] = make([]*bufio.ReadWriter, 0)
 	case newSubscriber:
 		_, ok := subscriptionMap[message.Topic]
 		if !ok {
-			rw.Write([]byte("Unrecognized topic"))
+			sendMessage(rw, serverMessage{
+				Type:    subError,
+				Message: "Could not subscribe",
+			})
+
 		} else {
 			subscriptionMap[message.Topic] = append(subscriptionMap[message.Topic], rw)
 			fmt.Println("Subsacribed to " + message.Topic)
 		}
+
 	default:
-		rw.Write([]byte("Unrecognised message"))
+		sendMessage(rw, serverMessage{
+			Type:    unknownTypeError,
+			Message: unknownTypeError,
+		})
+		log.Println("Unrecognised message.")
 	}
 }

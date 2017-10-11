@@ -3,7 +3,10 @@ package mcpubsub
 import "bufio"
 
 const (
+	connect          = "Client connected"
 	newPublisher     = "New publisher"
+	subError         = "Error"
+	unknownTypeError = "Unknown message type"
 	messagePublished = "Message published"
 	newSubscriber    = "New subscriber"
 	filePath         = "/home/sylar/backup.json"

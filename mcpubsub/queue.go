@@ -5,20 +5,20 @@ import (
 )
 
 type Queue struct {
-	messages []serverMessage
+	Messages []serverMessage `json:"messages"`
 	mutex    *sync.Cond
 }
 
 func (q *Queue) Push(data serverMessage) {
 	q.mutex.L.Lock()
 	defer q.mutex.L.Unlock()
-	q.messages = append(q.messages, data)
+	q.Messages = append(q.Messages, data)
 	q.mutex.Signal()
 }
 
 func NewQueue() *Queue {
 	return &Queue{
-		messages: make([]serverMessage, 0),
+		Messages: make([]serverMessage, 0),
 		mutex:    sync.NewCond(new(sync.Mutex)),
 	}
 }
@@ -27,11 +27,11 @@ func (q *Queue) Pop() serverMessage {
 	q.mutex.L.Lock()
 	defer q.mutex.L.Unlock()
 
-	for len(q.messages) == 0 {
+	for len(q.Messages) == 0 {
 		q.mutex.Wait()
 	}
 
-	msg := q.messages[len(q.messages)-1]
-	q.messages = q.messages[:len(q.messages)-1]
+	msg := q.Messages[len(q.Messages)-1]
+	q.Messages = q.Messages[:len(q.Messages)-1]
 	return msg
 }

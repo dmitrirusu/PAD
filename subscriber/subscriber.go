@@ -5,6 +5,7 @@ import (
 	"net"
 	"encoding/gob"
 	"log"
+	"fmt"
 )
 
 const (
@@ -59,8 +60,11 @@ func (sub *subscriber) Subscribe(topic string, callback Func) error {
 	sub.rw.Flush()
 
 	for {
-		msg, _ := receiveMessage(sub.rw)
-
+		msg, err := receiveMessage(sub.rw)
+		if err != nil {
+			fmt.Println("Could not subscribe ")
+			break
+		}
 		sub.callBackMap[topic](msg.Message)
 	}
 

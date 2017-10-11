@@ -1,24 +1,27 @@
 package main
 
 import (
+	"github.com/PAD/mcpubsub"
 	"bufio"
 	"os"
 	"fmt"
+	"github.com/nu7hatch/gouuid"
 	"time"
 )
 
 func main() {
 
-	sub := NewSub()
+	pub := mcpubsub.NewPub()
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter Topic: ")
-
 	topic, _ := reader.ReadString('\n')
 
-	go sub.Subscribe(topic, func(message string) {
-		fmt.Println("Received message: ", message)
-	})
-	time.Sleep(time.Second * 10000000)
+	for {
 
+		time.Sleep(time.Second * 1)
+		u, _ := uuid.NewV4()
+
+		pub.Publish(topic, u.String())
+	}
 }
