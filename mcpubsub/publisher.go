@@ -1,7 +1,8 @@
-package main
+package mcpubsub
 
 import (
 	"bufio"
+	"net"
 )
 
 type publisherApi interface {
@@ -13,22 +14,32 @@ type publisher struct {
 	rw *bufio.ReadWriter
 }
 
-var publisherId = 1
+func newRW() (*bufio.ReadWriter, error) {
 
-func newPublisher(rw *bufio.ReadWriter) publisherApi {
-	publisherObj := publisher{publisherId, rw, }
-	publisherId++
+	conn, err := net.Dial("tcp", "localhost"+port)
+	if err != nil {
+		return nil, err
+	}
+	rw := bufio.NewReadWriter(bufio.NewReader(conn),
+		bufio.NewWriter(conn))
+	return rw, nil
+}
 
-	sendMessage(publisherObj.rw, serverMessage{
-		Type: addPublisher},
-	)
+func NewPub() publisherApi {
+	rw, _ := newRW()
+	publisherObj := publisher{
+		clientId,
+		rw,
+	}
+
+	clientId++
 	return publisherObj
 }
 
 func (publisherObj publisher) Publish(topic string, message string) error {
 	err := sendMessage(publisherObj.rw, serverMessage{
 		Id:      publisherObj.id,
-		Type:    published,
+		Type:    messagePublished,
 		Topic:   topic,
 		Message: message,
 	})
