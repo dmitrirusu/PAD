@@ -13,7 +13,6 @@ func (q *Queue) Push(data serverMessage) {
 	q.mutex.L.Lock()
 	defer q.mutex.L.Unlock()
 	q.Messages = append(q.Messages, data)
-	q.mutex.Signal()
 }
 
 func NewQueue() *Queue {
@@ -27,11 +26,11 @@ func (q *Queue) Pop() serverMessage {
 	q.mutex.L.Lock()
 	defer q.mutex.L.Unlock()
 
-	for len(q.Messages) == 0 {
-		q.mutex.Wait()
+	if (len(q.Messages) > 0) {
+		msg := q.Messages[len(q.Messages)-1]
+		q.Messages = q.Messages[:len(q.Messages)-1]
+		return msg
+	} else {
+		return serverMessage{Type:"nil"}
 	}
-
-	msg := q.Messages[len(q.Messages)-1]
-	q.Messages = q.Messages[:len(q.Messages)-1]
-	return msg
 }

@@ -1,6 +1,6 @@
 package main
 
-import 	"github.com/PAD/mcpubsub"
+import "github.com/git_pad/mcpubsub"
 
 func main() {
 	mcpubsub.Start()

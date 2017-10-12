@@ -1,12 +1,11 @@
 package main
 
-import (
-	"github.com/PAD/mcpubsub"
-	"bufio"
+import ("bufio"
 	"os"
 	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"time"
+	"github.com/git_pad/mcpubsub"
 )
 
 func main() {

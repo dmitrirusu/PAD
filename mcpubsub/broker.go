@@ -72,7 +72,9 @@ func broadCaster() {
 	for {
 		for _, queue := range pipeline {
 			message := queue.Pop()
-			broadCastMessage(message)
+			if message.Type != "nil" {
+				broadCastMessage(message)
+			}
 		}
 	}
 }
@@ -163,21 +165,22 @@ func handleMessage(message serverMessage, rw *bufio.ReadWriter) {
 	case messagePublished:
 		_, ok := pipeline[message.Topic]
 		if !ok {
+			subscriptionMap[message.Topic] = []*bufio.ReadWriter{}
 			pipeline[message.Topic] = NewQueue()
 		}
 		pipeline[message.Topic].Push(message)
 	case newSubscriber:
-		_, ok := subscriptionMap[message.Topic]
-		if !ok {
-			sendMessage(rw, serverMessage{
-				Type:    subError,
-				Message: "Could not subscribe",
-			})
-
-		} else {
+		//_, ok := subscriptionMap[message.Topic]
+		//if !ok {
+		//	sendMessage(rw, serverMessage{
+		//		Type:    subError,
+		//		Message: "Could not subscribe",
+		//	})
+		//
+		//} else {
 			subscriptionMap[message.Topic] = append(subscriptionMap[message.Topic], rw)
 			fmt.Println("Subsacribed to " + message.Topic)
-		}
+		//}
 
 	default:
 		sendMessage(rw, serverMessage{
